@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 #[derive(Debug, Clone, Copy)]
-enum Token {
+pub enum Token {
     Number(u32),
     Add,
     Mul,
@@ -34,15 +34,23 @@ impl TokenTrait for Token {
     }
 }
 
-trait TokenTrait {
+pub trait TokenTrait {
     fn power(self) -> (u8, u8);
     fn is_end(self) -> bool;
     fn is_op(self) -> bool;
     fn is_atom(self) -> bool;
-    fn end() -> Self; 
+    fn end() -> Self;
 }
 
-trait Lexer<T: TokenTrait + Copy> {
+impl PartialEq for Token {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Number(l0), Self::Number(r0)) => l0 == r0,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
+}
+pub trait Lexer<T: TokenTrait + Copy> {
     fn next(&mut self) -> T;
     fn peek(&self) -> T;
 }
@@ -50,7 +58,7 @@ trait Lexer<T: TokenTrait + Copy> {
 impl<T: TokenTrait + Copy> Lexer<T> for Vec<T> {
     fn next(&mut self) -> T {
         if self.peek().is_end() {
-            return T::end();   
+            return T::end();
         }
         self.remove(0)
     }
@@ -59,21 +67,21 @@ impl<T: TokenTrait + Copy> Lexer<T> for Vec<T> {
     }
 }
 
-struct Parser<T: TokenTrait + Copy + Debug> {
+pub struct Parser<T: TokenTrait + Copy + Debug> {
     lexer: Box<dyn Lexer<T>>,
 }
 
 impl<T: TokenTrait + Copy + Debug> Parser<T> {
-    fn new(lexer: Box<impl Lexer<T> + 'static>) -> Self {
+    pub fn new(lexer: Box<impl Lexer<T> + 'static>) -> Self {
         return Parser { lexer };
     }
 
-    fn parse(&mut self) -> Vec<T> {
+    pub fn parse(&mut self) -> Vec<T> {
         self.parse_bp(0)
     }
 
     // bp = binding power
-    fn parse_bp(&mut self, min_bp: u8) -> Vec<T> {
+    pub fn parse_bp(&mut self, min_bp: u8) -> Vec<T> {
         let token = self.lexer.next();
         let mut lhs = if token.is_atom() {
             vec![token]
@@ -110,21 +118,29 @@ impl<T: TokenTrait + Copy + Debug> Parser<T> {
     }
 }
 
-fn main() {
-    // 10 + 12 * 3 + 100 * 1
-    let token = vec![
-        Token::Number(10),
-        Token::Add,
-        Token::Number(12),
-        Token::Mul,
-        Token::Number(3),
-        Token::Add, 
-        Token::Number(100),
-        Token::Mul,
-        Token::Number(1)
-    ];
+#[cfg(test)]
+mod tests {
+    use super::{Token, Parser};
+    #[test]
+    fn test_parser() {
+        // 10 + 12 * 3
+        let token = vec![
+            Token::Number(10),
+            Token::Add,
+            Token::Number(12),
+            Token::Mul,
+            Token::Number(3),
+        ];
 
-    let mut parser = Parser::new(Box::new(token));
+        let mut parser = Parser::new(Box::new(token));
 
-    println!("{:?}", parser.parse());
+        assert!(parser.parse().iter().eq([
+            Token::Number(10),
+            Token::Number(12),
+            Token::Number(3),
+            Token::Mul,
+            Token::Add
+        ]
+        .iter()));
+    }
 }
