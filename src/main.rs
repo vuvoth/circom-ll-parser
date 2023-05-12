@@ -12,34 +12,56 @@ enum Token {
 impl TokenTrait for Token {
     fn power(self) -> (u8, u8) {
         match self {
-            Token::Number(_) => (0, 0),
+            Token::Number(_) => (9, 0),
             Token::Add => (1, 2),
             Token::Mul => (3, 4),
-            Token::Begin => (0, 0),
-            Token::End => (0, 0),
+            Token::Begin => (10, 10),
+            Token::End => (10, 10),
         }
     }
     fn is_end(self) -> bool {
         matches!(self, Self::End)
+    }
+    fn is_atom(self) -> bool {
+        match self {
+            Token::Number(_) | Token::Begin | Token::End => true,
+            _ => false,
+        }
+    }
+    fn is_op(self) -> bool {
+        !self.is_atom()
+    }
+    fn end() -> Self {
+        Self::End
+    }
+    fn is_begin(self) -> bool {
+        matches!(self, Self::Begin)
     }
 }
 
 trait TokenTrait {
     fn power(self) -> (u8, u8);
     fn is_end(self) -> bool;
+    fn is_op(self) -> bool;
+    fn is_atom(self) -> bool;
+    fn end() -> Self;
+    fn is_begin(self) -> bool;
 }
 
-trait Lexer<T: Copy> {
+trait Lexer<T: TokenTrait + Copy> {
     fn next(&mut self) -> T;
     fn peek(&self) -> T;
 }
 
-impl<T: Copy> Lexer<T> for Vec<T> {
+impl<T: TokenTrait + Copy> Lexer<T> for Vec<T> {
     fn next(&mut self) -> T {
+        if self.peek().is_end() {
+            return T::end();   
+        }
         self.remove(0)
     }
     fn peek(&self) -> T {
-        *self.first().unwrap()
+        *self.first().unwrap_or(&T::end())
     }
 }
 
@@ -58,43 +80,49 @@ impl<T: TokenTrait + Copy + Debug> Parser<T> {
 
     // bp = binding power
     fn parse_bp(&mut self, min_bp: u8) -> Vec<T> {
-        println!("min bp = {}", min_bp);
-        let current_token = self.lexer.peek();
-        if current_token.is_end() {
-            return vec![];
-        }
+        let token = self.lexer.next();
+        let mut lhs = if token.is_atom() {
+            vec![token]
+        } else {
+            let op = vec![token];
+            let (left_bp, right_pb) = token.power();
+            let rhs = self.parse_bp(right_pb);
+            [rhs, op].concat()
+        };
 
-        let mut tokens = vec![current_token];
-        let (mut left_bp, _) = current_token.power();
-        while left_bp >= min_bp  {
-            let curr_token = self.lexer.next();
+        loop {
+            let op = self.lexer.peek();
 
-            println!("{:?} {}", curr_token, min_bp);
-            if !curr_token.is_end() {
-                left_bp = curr_token.power().0;
-                let right_bp = curr_token.power().1;
-                // println!("{}, {}", left_bp, right_bp);
-                let next_parsing = self.parse_bp(right_bp);
-
-                tokens = [[vec![curr_token], tokens].concat(), next_parsing].concat();
-            } else {
+            if op.is_end() {
                 break;
             }
+            println!("{:?}", op);
+            if op.is_atom() {
+                panic!("atom can't follow after atom!!!");
+            }
+
+            // now op is + or *
+
+            let (left_bp, right_bp) = op.power();
+            if left_bp < min_bp {
+                break;
+            }
+            self.lexer.next();
+            let rhs = self.parse_bp(right_bp);
+
+            lhs = [lhs, rhs, vec![op]].concat()
         }
-        println!("{:?}", tokens);
-        tokens
+        lhs
     }
 }
 
 fn main() {
     let mut token = vec![
-        Token::Begin,
         Token::Number(10),
         Token::Add,
         Token::Number(12),
         Token::Mul,
         Token::Number(3),
-        Token::End,
     ];
 
     let mut parser = Parser::new(Box::new(token));
