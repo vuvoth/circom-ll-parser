@@ -5,7 +5,6 @@ enum Token {
     Number(u32),
     Add,
     Mul,
-    Begin,
     End,
 }
 
@@ -15,7 +14,6 @@ impl TokenTrait for Token {
             Token::Number(_) => (9, 0),
             Token::Add => (1, 2),
             Token::Mul => (3, 4),
-            Token::Begin => (10, 10),
             Token::End => (10, 10),
         }
     }
@@ -24,7 +22,7 @@ impl TokenTrait for Token {
     }
     fn is_atom(self) -> bool {
         match self {
-            Token::Number(_) | Token::Begin | Token::End => true,
+            Token::Number(_) | Token::End => true,
             _ => false,
         }
     }
@@ -34,9 +32,6 @@ impl TokenTrait for Token {
     fn end() -> Self {
         Self::End
     }
-    fn is_begin(self) -> bool {
-        matches!(self, Self::Begin)
-    }
 }
 
 trait TokenTrait {
@@ -44,8 +39,7 @@ trait TokenTrait {
     fn is_end(self) -> bool;
     fn is_op(self) -> bool;
     fn is_atom(self) -> bool;
-    fn end() -> Self;
-    fn is_begin(self) -> bool;
+    fn end() -> Self; 
 }
 
 trait Lexer<T: TokenTrait + Copy> {
@@ -85,7 +79,7 @@ impl<T: TokenTrait + Copy + Debug> Parser<T> {
             vec![token]
         } else {
             let op = vec![token];
-            let (left_bp, right_pb) = token.power();
+            let (_left_bp, right_pb) = token.power();
             let rhs = self.parse_bp(right_pb);
             [rhs, op].concat()
         };
@@ -96,7 +90,7 @@ impl<T: TokenTrait + Copy + Debug> Parser<T> {
             if op.is_end() {
                 break;
             }
-            println!("{:?}", op);
+
             if op.is_atom() {
                 panic!("atom can't follow after atom!!!");
             }
@@ -117,12 +111,17 @@ impl<T: TokenTrait + Copy + Debug> Parser<T> {
 }
 
 fn main() {
-    let mut token = vec![
+    // 10 + 12 * 3 + 100 * 1
+    let token = vec![
         Token::Number(10),
         Token::Add,
         Token::Number(12),
         Token::Mul,
         Token::Number(3),
+        Token::Add, 
+        Token::Number(100),
+        Token::Mul,
+        Token::Number(1)
     ];
 
     let mut parser = Parser::new(Box::new(token));
