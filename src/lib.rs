@@ -1,5 +1,8 @@
 use std::fmt::Debug;
 
+mod lexer;
+mod syntax;
+
 #[derive(Debug, Clone, Copy)]
 pub enum Token {
     Number(u32),
@@ -144,3 +147,4 @@ mod tests {
         .iter()));
     }
 }
+
