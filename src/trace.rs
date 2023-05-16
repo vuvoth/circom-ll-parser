@@ -2,30 +2,44 @@ use rowan::{GreenNode, GreenNodeBuilder};
 
 use crate::syntax::SyntaxKind;
 
-pub struct TreeShape<'a> {
+#[derive(Debug)]
+pub struct TreeShape {
     token_kind: SyntaxKind,
-    token_content: Option<&'a str>,
-    children: Vec<TreeShape<'a>>,
+    token_content: Option<String>,
+    children: Vec<TreeShape>,
 }
 
-impl TreeShape<'_> {
+impl TreeShape {
     pub fn new(
         token_kind: SyntaxKind,
-        token_content: Option<&str>,
+        token_content: Option<String>,
         children: Vec<TreeShape>,
     ) -> Self {
-        return TreeShape { token_kind, token_content, children };
+        return TreeShape {
+            token_kind,
+            token_content,
+            children,
+        };
     }
 
-    pub fn build(self, builder: &mut GreenNodeBuilder<'static>, tokens: &Vec<String>) {
+    pub fn build(self, builder: &mut GreenNodeBuilder<'static>) {
         builder.start_node(self.token_kind.into());
         for child in self.children {
-            if let Some(content) = self.token_content{
-                builder.token(child.token_kind.into(), content);
+            println!("{:?}| str: {}", child, self.token_content.as_deref().unwrap_or("abs").to_string());
+            if child.token_content.is_some() {
+                builder.token(
+                    child.token_kind.into(),
+                    &child.token_content.as_deref().unwrap().to_string(),
+                );
             } else {
-                child.build(builder, tokens);
+                child.build(builder);
             }
         }
         builder.finish_node();
+    }
+
+    pub fn add_child(&mut self, child: TreeShape) -> bool {
+        self.children.push(child);
+        true
     }
 }

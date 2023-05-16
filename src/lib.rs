@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use token::TokenTrait;
+use trace::TreeShape;
 
 mod lexer;
 mod syntax;
