@@ -65,8 +65,8 @@ impl TokenTrait for SyntaxKind {
     }
     fn power(self) -> (u8, u8) {
         match self {
-            ADD => (1, 2),
-            MUL => (3, 4),
+            ADD => (2, 1),
+            MUL => (4, 3),
             NUMBER => (10, 0),
             EOF => (10, 10),
             _ => (0, 0),
@@ -227,18 +227,23 @@ mod tests {
 
     #[test]
     fn test_parser_build_tree() {
-        let token_kind = vec![NUMBER, ADD, NUMBER, MUL, NUMBER];
-        let token_content = vec!["10".to_string(), "+".to_string(), "100".to_string(), "*".to_string(), "20".to_string()];
+        let token_kind = vec![NUMBER, MUL, NUMBER, ADD, NUMBER];
+        let token_content = vec!["10".to_string(), "*".to_string(), "100".to_string(), "+".to_string(), "20".to_string()];
         let green_node = Parser::parsing(token_kind, token_content);
 
         let syntax_node = SyntaxNode::new_root(green_node);
 
         println!("tree: {:?}", syntax_node.to_string());
-        for child in syntax_node.children() {
-            println!("{:?}", child);
-            for another_child in child.children() {
-                println!("{:?}", another_child);
-            }
-        }
+        // for child in syntax_node.children() {
+        //     println!("{:?}", child);
+        //     println!("\n");
+        //     for another_child in child.children() {
+        //         println!("\n");
+        //         println!("{:?}", another_child);
+        //         for x in another_child.children() {
+        //             println!("{:?}", x);
+        //         }
+        //     }
+        // }
     }
 }
