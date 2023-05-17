@@ -4,7 +4,7 @@ use token::TokenTrait;
 use trace::TreeShape;
 
 mod lexer;
-mod syntax;
+pub mod syntax;
 mod token;
 pub mod trace;
 

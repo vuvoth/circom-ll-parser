@@ -37,15 +37,12 @@ impl rowan::Language for SimpleLang {
 use rowan::GreenNode;
 use rowan::GreenNodeBuilder;
 
-use rowan::Children;
-
 type SyntaxNode = rowan::SyntaxNode<SimpleLang>;
 #[allow(unused)]
 type SyntaxToken = rowan::SyntaxToken<SimpleLang>;
 #[allow(unused)]
 type SyntaxElement = rowan::NodeOrToken<SyntaxNode, SyntaxToken>;
 
-use crate::token;
 use crate::trace::TreeShape;
 
 use super::TokenTrait;
@@ -122,26 +119,27 @@ impl Parser {
         let mut builder = GreenNodeBuilder::new();
         builder.start_node(ROOT.into());
         tree.build(&mut builder);
+        builder.finish_node();
         builder.finish()
     }
 
     pub fn parsing_bp(&mut self, min_bp: u8) -> TreeShape {
         let (token_kind, content) = self.next();
   
-        let mut lhs = if token_kind.is_atom() {
+        let mut lhs_node = if token_kind.is_atom() {
             TreeShape::new(token_kind,Some(content), vec![])
         } else {
             let op = token_kind;
             let (_left_bp, right_bp) = op.power();
-            
-            let mut node = TreeShape::new(token_kind, None, vec![]);
+
+            let mut tree = TreeShape::new(token_kind, None, vec![]);
+
             let op_node = TreeShape::new(token_kind, Some(content), vec![]);
             let right_node = self.parsing_bp(right_bp);
 
-            node.add_child(right_node);
-            node.add_child(op_node);
-    
-            node 
+            tree.add_child(op_node);
+            tree.add_child(right_node);
+            tree
         };
 
         loop {
@@ -156,6 +154,7 @@ impl Parser {
                 panic!("atom can't follow after atom!!!");
             }
 
+            let mut tree = TreeShape::new(op, None, vec![]);
             let op_node = TreeShape::new(op, Some(token_content), vec![]);
 
             // now op is + or *
@@ -170,15 +169,14 @@ impl Parser {
             let rhs_node = self.parsing_bp(right_bp);
 
             // union tree 
-            let mut new_tree = TreeShape::new(op, None, vec![]);
 
-            new_tree.add_child(lhs);
-            new_tree.add_child(rhs_node);
-            new_tree.add_child(op_node);
+            tree.add_child(lhs_node);
+            tree.add_child(op_node);
+            tree.add_child(rhs_node);
 
-            lhs = new_tree
+            lhs_node = tree
         }
-        lhs
+        lhs_node
     }
 }
 
@@ -236,6 +234,11 @@ mod tests {
         let syntax_node = SyntaxNode::new_root(green_node);
 
         println!("tree: {:?}", syntax_node.to_string());
-    
+        for child in syntax_node.children() {
+            println!("{:?}", child);
+            for another_child in child.children() {
+                println!("{:?}", another_child);
+            }
+        }
     }
 }

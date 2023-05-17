@@ -24,17 +24,14 @@ impl TreeShape {
 
     pub fn build(self, builder: &mut GreenNodeBuilder<'static>) {
         builder.start_node(self.token_kind.into());
-        for child in self.children {
-            println!("{:?}| str: {}", child, self.token_content.as_deref().unwrap_or("abs").to_string());
-            if child.token_content.is_some() {
-                builder.token(
-                    child.token_kind.into(),
-                    &child.token_content.as_deref().unwrap().to_string(),
-                );
-            } else {
-                child.build(builder);
-            }
+        if let Some(content) = self.token_content {
+            builder.token(self.token_kind.into(), &content);
         }
+
+        for child in self.children {
+            child.build(builder);
+        }
+        
         builder.finish_node();
     }
 
