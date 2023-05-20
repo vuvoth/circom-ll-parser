@@ -43,7 +43,7 @@ type SyntaxToken = rowan::SyntaxToken<SimpleLang>;
 #[allow(unused)]
 type SyntaxElement = rowan::NodeOrToken<SyntaxNode, SyntaxToken>;
 
-use crate::trace::TreeShape;
+use crate::trace::Trace;
 
 use super::TokenTrait;
 
@@ -77,64 +77,64 @@ impl TokenTrait for SyntaxKind {
 #[derive(Debug)]
 pub struct Parser {
     token_kind: Vec<SyntaxKind>,
-    token_content: Vec<String>,
     errors: Vec<String>,
+    index: u32
 }
 
 impl Parser {
-    pub fn next(&mut self) -> (SyntaxKind, String) {
+    pub fn next(&mut self) -> (SyntaxKind, u32) {
         if self.token_kind.is_empty() {
-            return (EOF, "".to_string());
+            return (EOF, self.index);
         }
-
-        return (self.token_kind.remove(0), self.token_content.remove(0));
+        self.index = self.index + 1;
+        return (self.token_kind.remove(0), self.index - 1);
     }
 
-    pub fn peek(&mut self) -> (SyntaxKind, String) {
+    pub fn peek(&mut self) -> (SyntaxKind , u32) {
         if self.token_kind.is_empty() {
-            return (EOF, "".to_string());
+            return (EOF, self.index);
         }
 
-        return (self.token_kind[0], self.token_content[0].clone());
+        return (self.token_kind[0], self.index);
     }
     pub fn new(
         token_kind: Vec<SyntaxKind>,
-        token_content: Vec<String>,
     ) -> Self {
         Parser {
             token_kind,
-            token_content,
             errors: Vec::<String>::new(),
+            index: 0
         }
     }
 
     pub fn parsing(
         token_kind: Vec<SyntaxKind>,
-        token_content: Vec<String>,
+        token_content: &Vec<String>,
     ) -> GreenNode {
-        let mut p = Parser::new(token_kind, token_content);
+        let mut p = Parser::new(token_kind);
         let tree = p.parsing_bp(0);
         println!("{:#?}", tree);
         
         let mut builder = GreenNodeBuilder::new();
         builder.start_node(ROOT.into());
-        tree.build(&mut builder);
+        tree.build(&mut builder, token_content);
         builder.finish_node();
         builder.finish()
     }
 
-    pub fn parsing_bp(&mut self, min_bp: u8) -> TreeShape {
-        let (token_kind, content) = self.next();
-  
+    pub fn parsing_bp(&mut self, min_bp: u8) -> Trace {
+        let (token_kind, id) = self.next();
+        
+        println!("{}", id);
         let mut lhs_node = if token_kind.is_atom() {
-            TreeShape::new(token_kind,Some(content), vec![])
+            Trace::new(token_kind,Some(id), vec![])
         } else {
             let op = token_kind;
             let (_left_bp, right_bp) = op.power();
 
-            let mut tree = TreeShape::new(token_kind, None, vec![]);
+            let mut tree = Trace::new(token_kind, None, vec![]);
 
-            let op_node = TreeShape::new(token_kind, Some(content), vec![]);
+            let op_node = Trace::new(token_kind, Some(id), vec![]);
             let right_node = self.parsing_bp(right_bp);
 
             tree.add_child(op_node);
@@ -143,8 +143,9 @@ impl Parser {
         };
 
         loop {
-            let (op, token_content) = self.peek();
+            let (op, op_id) = self.peek();
 
+            println!("loop: {}", op_id);
         
             if op.is_end() {
                 break;
@@ -154,8 +155,8 @@ impl Parser {
                 panic!("atom can't follow after atom!!!");
             }
 
-            let mut tree = TreeShape::new(op, None, vec![]);
-            let op_node = TreeShape::new(op, Some(token_content), vec![]);
+            let mut tree = Trace::new(op, None, vec![]);
+            let op_node = Trace::new(op, Some(op_id), vec![]);
 
             // now op is + or *
 
@@ -169,7 +170,6 @@ impl Parser {
             let rhs_node = self.parsing_bp(right_bp);
 
             // union tree 
-
             tree.add_child(lhs_node);
             tree.add_child(op_node);
             tree.add_child(rhs_node);
@@ -229,21 +229,9 @@ mod tests {
     fn test_parser_build_tree() {
         let token_kind = vec![NUMBER, MUL, NUMBER, ADD, NUMBER];
         let token_content = vec!["10".to_string(), "*".to_string(), "100".to_string(), "+".to_string(), "20".to_string()];
-        let green_node = Parser::parsing(token_kind, token_content);
+        let green_node = Parser::parsing(token_kind, &token_content);
 
         let syntax_node = SyntaxNode::new_root(green_node);
-
-        println!("tree: {:?}", syntax_node.to_string());
-        // for child in syntax_node.children() {
-        //     println!("{:?}", child);
-        //     println!("\n");
-        //     for another_child in child.children() {
-        //         println!("\n");
-        //         println!("{:?}", another_child);
-        //         for x in another_child.children() {
-        //             println!("{:?}", x);
-        //         }
-        //     }
-        // }
+        println!("{}", syntax_node); 
     }
 }

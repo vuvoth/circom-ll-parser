@@ -3,39 +3,39 @@ use rowan::{GreenNode, GreenNodeBuilder};
 use crate::syntax::SyntaxKind;
 
 #[derive(Debug)]
-pub struct TreeShape {
+pub struct Trace {
     token_kind: SyntaxKind,
-    token_content: Option<String>,
-    children: Vec<TreeShape>,
+    token_id: Option<u32>,
+    children: Vec<Trace>,
 }
 
-impl TreeShape {
+impl Trace {
     pub fn new(
         token_kind: SyntaxKind,
-        token_content: Option<String>,
-        children: Vec<TreeShape>,
+        is_token_node: Option<u32>,
+        children: Vec<Trace>,
     ) -> Self {
-        return TreeShape {
+        return Trace {
             token_kind,
-            token_content,
+            token_id: is_token_node,
             children,
         };
     }
 
-    pub fn build(self, builder: &mut GreenNodeBuilder<'static>) {
+    pub fn build(self, builder: &mut GreenNodeBuilder<'static>, tokens: &Vec<String>) {
         builder.start_node(self.token_kind.into());
-        if let Some(content) = self.token_content {
-            builder.token(self.token_kind.into(), &content);
+        if let Some(id) = self.token_id {
+            builder.token(self.token_kind.into(), &tokens[id as usize]);
         }
 
         for child in self.children {
-            child.build(builder);
+            child.build(builder, tokens);
         }
         
         builder.finish_node();
     }
 
-    pub fn add_child(&mut self, child: TreeShape) -> bool {
+    pub fn add_child(&mut self, child: Trace) -> bool {
         self.children.push(child);
         true
     }
