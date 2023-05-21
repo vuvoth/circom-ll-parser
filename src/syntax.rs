@@ -10,6 +10,8 @@ pub enum SyntaxKind {
 
     EXPR, // expression
     ROOT, // list of expression,
+    TEAMPLATE,
+    UNPARSE, 
     EOF,
 }
 
@@ -69,6 +71,7 @@ impl TokenTrait for SyntaxKind {
             MUL => (4, 3),
             NUMBER => (10, 0),
             EOF => (10, 10),
+            TEAMPLATE => (5, 6),
             _ => (0, 0),
         }
     }
@@ -113,7 +116,6 @@ impl Parser {
     ) -> GreenNode {
         let mut p = Parser::new(token_kind);
         let tree = p.parsing_bp(0);
-        println!("{:#?}", tree);
         
         let mut builder = GreenNodeBuilder::new();
         builder.start_node(ROOT.into());
@@ -125,7 +127,6 @@ impl Parser {
     pub fn parsing_bp(&mut self, min_bp: u8) -> Trace {
         let (token_kind, id) = self.next();
         
-        println!("{}", id);
         let mut lhs_node = if token_kind.is_atom() {
             Trace::new(token_kind,Some(id), vec![])
         } else {
@@ -145,7 +146,6 @@ impl Parser {
         loop {
             let (op, op_id) = self.peek();
 
-            println!("loop: {}", op_id);
         
             if op.is_end() {
                 break;
@@ -232,6 +232,6 @@ mod tests {
         let green_node = Parser::parsing(token_kind, &token_content);
 
         let syntax_node = SyntaxNode::new_root(green_node);
-        println!("{}", syntax_node); 
+        println!("{:?}", syntax_node.kind()); 
     }
 }
