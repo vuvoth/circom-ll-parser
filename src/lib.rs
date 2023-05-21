@@ -1,5 +1,13 @@
 use std::fmt::Debug;
 
+use token::TokenTrait;
+use trace::Trace;
+
+mod lexer;
+pub mod syntax;
+mod token;
+pub mod trace;
+
 #[derive(Debug, Clone, Copy)]
 pub enum Token {
     Number(u32),
@@ -34,13 +42,7 @@ impl TokenTrait for Token {
     }
 }
 
-pub trait TokenTrait {
-    fn power(self) -> (u8, u8);
-    fn is_end(self) -> bool;
-    fn is_op(self) -> bool;
-    fn is_atom(self) -> bool;
-    fn end() -> Self;
-}
+
 
 impl PartialEq for Token {
     fn eq(&self, other: &Self) -> bool {
@@ -144,3 +146,4 @@ mod tests {
         .iter()));
     }
 }
+
