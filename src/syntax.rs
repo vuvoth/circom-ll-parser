@@ -9,10 +9,11 @@ pub enum SyntaxKind {
     ERROR,      // as well as errors
 
     EXPR, // expression
-    ROOT, // list of expression,
     TEAMPLATE,
-    UNPARSE, 
+    IDENT,
+    UNPARSE,
     EOF,
+    ROOT, // list of expression,
 }
 
 use SyntaxKind::*;
@@ -72,6 +73,7 @@ impl TokenTrait for SyntaxKind {
             NUMBER => (10, 0),
             EOF => (10, 10),
             TEAMPLATE => (5, 6),
+            IDENT => (10, 0),
             _ => (0, 0),
         }
     }
@@ -81,7 +83,7 @@ impl TokenTrait for SyntaxKind {
 pub struct Parser {
     token_kind: Vec<SyntaxKind>,
     errors: Vec<String>,
-    index: u32
+    index: u32,
 }
 
 impl Parser {
@@ -93,30 +95,25 @@ impl Parser {
         return (self.token_kind.remove(0), self.index - 1);
     }
 
-    pub fn peek(&mut self) -> (SyntaxKind , u32) {
+    pub fn peek(&mut self) -> (SyntaxKind, u32) {
         if self.token_kind.is_empty() {
             return (EOF, self.index);
         }
 
         return (self.token_kind[0], self.index);
     }
-    pub fn new(
-        token_kind: Vec<SyntaxKind>,
-    ) -> Self {
+    pub fn new(token_kind: Vec<SyntaxKind>) -> Self {
         Parser {
             token_kind,
             errors: Vec::<String>::new(),
-            index: 0
+            index: 0,
         }
     }
 
-    pub fn parsing(
-        token_kind: Vec<SyntaxKind>,
-        token_content: &Vec<String>,
-    ) -> GreenNode {
+    pub fn parsing(token_kind: Vec<SyntaxKind>, token_content: &Vec<String>) -> GreenNode {
         let mut p = Parser::new(token_kind);
         let tree = p.parsing_bp(0);
-        
+
         let mut builder = GreenNodeBuilder::new();
         builder.start_node(ROOT.into());
         tree.build(&mut builder, token_content);
@@ -126,9 +123,9 @@ impl Parser {
 
     pub fn parsing_bp(&mut self, min_bp: u8) -> Trace {
         let (token_kind, id) = self.next();
-        
+
         let mut lhs_node = if token_kind.is_atom() {
-            Trace::new(token_kind,Some(id), vec![])
+            Trace::new(token_kind, Some(id), vec![])
         } else {
             let op = token_kind;
             let (_left_bp, right_bp) = op.power();
@@ -146,7 +143,6 @@ impl Parser {
         loop {
             let (op, op_id) = self.peek();
 
-        
             if op.is_end() {
                 break;
             }
@@ -167,12 +163,23 @@ impl Parser {
 
             self.next();
 
-            let rhs_node = self.parsing_bp(right_bp);
+            if matches!(op, TEAMPLATE) {
+                let (_, name_id) = self.peek();
+                let name_node = Trace::new(IDENT, Some(name_id), vec![]);
+                self.next();
 
-            // union tree 
-            tree.add_child(lhs_node);
-            tree.add_child(op_node);
-            tree.add_child(rhs_node);
+                let rhs_node = self.parsing_bp(right_bp);
+                tree.add_child(op_node);
+                tree.add_child(name_node);
+                tree.add_child(rhs_node);
+            } else {
+                let rhs_node = self.parsing_bp(right_bp);
+
+                // union tree
+                tree.add_child(lhs_node);
+                tree.add_child(op_node);
+                tree.add_child(rhs_node);
+            }
 
             lhs_node = tree
         }
@@ -228,10 +235,34 @@ mod tests {
     #[test]
     fn test_parser_build_tree() {
         let token_kind = vec![NUMBER, MUL, NUMBER, ADD, NUMBER];
-        let token_content = vec!["10".to_string(), "*".to_string(), "100".to_string(), "+".to_string(), "20".to_string()];
+        let token_content = vec![
+            "10".to_string(),
+            "*".to_string(),
+            "100".to_string(),
+            "+".to_string(),
+            "20".to_string(),
+        ];
         let green_node = Parser::parsing(token_kind, &token_content);
 
         let syntax_node = SyntaxNode::new_root(green_node);
-        println!("{:?}", syntax_node.kind()); 
+        println!("{:?}", syntax_node.kind());
+    }
+    #[test]
+    fn test_parser_template() {
+        let token_kind = vec![TEAMPLATE, IDENT, NUMBER, ADD, NUMBER];
+        let token_content = vec![
+            "template".to_string(),
+            "name".to_string(),
+            "10".to_string(),
+            "+".to_string(),
+            "20".to_string(),
+        ];
+        let green_node = Parser::parsing(token_kind, &token_content);
+
+        let syntax_node = SyntaxNode::new_root(green_node).last_child().unwrap();
+        println!("{:?}", syntax_node);
+        for child in syntax_node.children() {
+            println!("{:?}", child);
+        }
     }
 }

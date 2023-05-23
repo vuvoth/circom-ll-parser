@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 
 use token::TokenTrait;
-use trace::Trace;
 
 mod lexer;
 pub mod syntax;

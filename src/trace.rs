@@ -12,12 +12,12 @@ pub struct Trace {
 impl Trace {
     pub fn new(
         token_kind: SyntaxKind,
-        is_token_node: Option<u32>,
+        token_id: Option<u32>,
         children: Vec<Trace>,
     ) -> Self {
         return Trace {
             token_kind,
-            token_id: is_token_node,
+            token_id,
             children,
         };
     }
