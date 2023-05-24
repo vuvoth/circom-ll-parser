@@ -12,6 +12,9 @@ pub enum SyntaxKind {
     TEAMPLATE,
     IDENT,
     UNPARSE,
+    LEFT_BR,
+    RIGHT_BR,
+    BLOCK,
     EOF,
     ROOT, // list of expression,
 }
@@ -72,7 +75,9 @@ impl TokenTrait for SyntaxKind {
             MUL => (4, 3),
             NUMBER => (10, 0),
             EOF => (10, 10),
-            TEAMPLATE => (5, 6),
+            TEAMPLATE => (7, 8),
+            LEFT_BR => (6, 7),
+            RIGHT_BR => (6, 7),
             IDENT => (10, 0),
             _ => (0, 0),
         }
@@ -121,6 +126,42 @@ impl Parser {
         builder.finish()
     }
 
+    pub fn parsing_block_out(token_kind: Vec<SyntaxKind>, token_content: &Vec<String>) -> GreenNode {
+        let mut p = Parser::new(token_kind);
+        let tree = p.parsing_block(0);
+
+        let mut builder = GreenNodeBuilder::new();
+        builder.start_node(ROOT.into());
+        tree.build(&mut builder, token_content);
+        builder.finish_node();
+        builder.finish()
+    }
+
+
+    pub fn parsing_block(&mut self, min_bp: u8) -> Trace {
+        let open = self.next();
+        let mut tree = Trace::new(BLOCK, None, vec![]);
+        let left_br: Trace = Trace::new(LEFT_BR, Some(open.1), vec![]);
+        tree.add_child(left_br);
+
+        loop {
+            let op = self.peek();
+            println!("{:?}", op);
+            if op.0.is_end() {
+                break;
+            }
+            if matches!(op.0, RIGHT_BR) {
+                let right_br: Trace = Trace::new(RIGHT_BR, Some(open.1), vec![]);
+                tree.add_child(right_br);
+                break;
+            }
+            let block_node = self.parsing_bp(min_bp);
+            println!("{:?}", block_node);
+            tree.add_child(block_node);
+        }
+        tree
+    }
+
     pub fn parsing_bp(&mut self, min_bp: u8) -> Trace {
         let (token_kind, id) = self.next();
 
@@ -154,16 +195,16 @@ impl Parser {
             let mut tree = Trace::new(op, None, vec![]);
             let op_node = Trace::new(op, Some(op_id), vec![]);
 
-            // now op is + or *
+            // now op is + or * or template
 
             let (left_bp, right_bp) = op.power();
             if left_bp < min_bp {
                 break;
             }
 
-            self.next();
 
             if matches!(op, TEAMPLATE) {
+                self.next();
                 let (_, name_id) = self.peek();
                 let name_node = Trace::new(IDENT, Some(name_id), vec![]);
                 self.next();
@@ -172,7 +213,12 @@ impl Parser {
                 tree.add_child(op_node);
                 tree.add_child(name_node);
                 tree.add_child(rhs_node);
-            } else {
+            } else if matches!(op, LEFT_BR) {
+                let (_, name_id) = self.peek();
+                return self.parsing_block(min_bp);
+            } 
+            else {
+                self.next();
                 let rhs_node = self.parsing_bp(right_bp);
 
                 // union tree
@@ -264,5 +310,25 @@ mod tests {
         for child in syntax_node.children() {
             println!("{:?}", child);
         }
+    }
+
+    #[test] 
+    fn test_parser_block() {
+        let token_kind = vec![LEFT_BR, NUMBER, ADD, NUMBER, RIGHT_BR];
+        let token_content = vec![
+            "{".to_string(),
+            "1".to_string(),
+            "+".to_string(),
+            "3".to_string(),
+            "}".to_string()
+        ];
+
+        let green_node = Parser::parsing_block_out(token_kind, &token_content);
+        let syntax_node = SyntaxNode::new_root(green_node).last_child().unwrap();
+        println!("{:?}", syntax_node);
+        for child in syntax_node.children() {
+            println!("{:?}", child);
+        }
+
     }
 }
