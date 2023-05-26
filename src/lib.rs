@@ -6,6 +6,10 @@ mod lexer;
 pub mod syntax;
 mod token;
 pub mod trace;
+pub mod  grammar;
+
+mod parser;
+mod syntax_kind;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Token {

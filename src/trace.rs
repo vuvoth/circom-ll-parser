@@ -1,41 +1,52 @@
 use rowan::{GreenNode, GreenNodeBuilder};
 
-use crate::syntax::SyntaxKind;
+use crate::syntax_kind::SyntaxKind;
 
 #[derive(Debug)]
-pub struct Trace {
+pub struct Output {
     token_kind: SyntaxKind,
-    token_id: Option<u32>,
-    children: Vec<Trace>,
+    token_id: Option<usize>,
+    children: Vec<Output>,
 }
 
-impl Trace {
-    pub fn new(
-        token_kind: SyntaxKind,
-        token_id: Option<u32>,
-        children: Vec<Trace>,
-    ) -> Self {
-        return Trace {
+impl Output {
+    pub fn new(token_kind: SyntaxKind, token_id: Option<usize>) -> Self {
+        return Output {
             token_kind,
             token_id,
-            children,
+            children: vec![],
         };
     }
 
-    pub fn build(self, builder: &mut GreenNodeBuilder<'static>, tokens: &Vec<String>) {
+    pub fn build_green_node(
+        self,
+        node_kind: SyntaxKind,
+        token_contents: &Vec<String>,
+    ) -> GreenNode {
+        let mut builder = GreenNodeBuilder::new();
+        
+        builder.start_node(node_kind.into());
+        self.construct(&mut builder, token_contents);
+        builder.finish_node();
+
+
+        builder.finish()
+    }
+
+    pub fn construct(self, builder: &mut GreenNodeBuilder<'static>, tokens: &Vec<String>) {
         builder.start_node(self.token_kind.into());
         if let Some(id) = self.token_id {
-            builder.token(self.token_kind.into(), &tokens[id as usize]);
+            builder.token(self.token_kind.into(), &tokens[id]);
         }
 
         for child in self.children {
-            child.build(builder, tokens);
+            child.construct(builder, tokens);
         }
-        
+
         builder.finish_node();
     }
 
-    pub fn add_child(&mut self, child: Trace) -> bool {
+    pub fn add_child(&mut self, child: Output) -> bool {
         self.children.push(child);
         true
     }
