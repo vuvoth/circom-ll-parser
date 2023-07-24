@@ -1,4 +1,4 @@
-use crate::{token_kind::TokenKind, node::Token};
+use crate::{node::Token, token_kind::TokenKind};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Event<'a> {

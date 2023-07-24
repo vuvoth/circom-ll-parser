@@ -1,6 +1,6 @@
 use logos::Logos;
 
-#[derive(Logos, Debug, PartialEq,Clone, Copy)]
+#[derive(Logos, Debug, PartialEq, Clone, Copy)]
 pub enum TokenKind {
     #[regex(r"//[^\n]*", logos::skip)]
     #[regex("[ \t]+", logos::skip)]
@@ -11,10 +11,22 @@ pub enum TokenKind {
     #[regex("[a-zA-Z_][a-zA-Z0-9_]*")]
     Name,
 
+    #[regex(r#""[^"]*""#)]
+    String,
+    #[token("pragma")]
+    Pragma,
+    #[token("circom")]
+    Circom,
+    #[regex("2.[0-9].[0-9]")]
+    Version,
     #[token("template")]
     Template,
     #[token("signal")]
     Signal,
+    #[token("var")]
+    Var,
+    #[token("include")]
+    Include,
     #[token("input")]
     Input,
     #[token("output")]
@@ -27,7 +39,11 @@ pub enum TokenKind {
     LCurly,
     #[token("}")]
     RCurly,
-    File,
+    #[token(";")]
+    Semicolon,
+    #[token(",")]
+    Comma,
+    CircomProgram,
     Block,
     EOF,
 }

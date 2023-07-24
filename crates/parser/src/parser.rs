@@ -4,6 +4,7 @@ use logos::Lexer;
 
 use crate::{
     event::Event,
+    grammar::entry::Scope,
     node::{Child, Token, Tree},
     token_kind::TokenKind,
 };
@@ -65,13 +66,13 @@ impl<'a> Parser<'a> {
         self.skip();
     }
 
-    fn advance_with_error(&mut self, error: &str) {
+    pub fn advance_with_error(&mut self, error: &str) {
         let m = self.open();
         // TODO: Error reporting.
         eprintln!("{error}");
         self.advance();
         self.close(m, TokenKind::Error);
-      }
+    }
 
     pub fn build_tree(self) -> Tree<'a> {
         let mut events = self.events;
@@ -93,7 +94,6 @@ impl<'a> Parser<'a> {
                 Event::Token(token) => {
                     stack.last_mut().unwrap().children.push(Child::Token(token));
                 }
-                _ => unreachable!(),
             }
         }
 
@@ -146,6 +146,14 @@ impl<'a> Parser<'a> {
         return false;
     }
 
+    pub fn expect_any(&mut self, kinds: &[TokenKind]) {
+        let kind = self.current().kind;
+        if kinds.contains(&kind) {
+            self.eat(kind);
+            return;
+        }
+        eprintln!("expected {kinds:?}");
+    }
     pub fn expect(&mut self, kind: TokenKind) {
         if self.eat(kind) {
             return;
@@ -159,73 +167,40 @@ impl<'a> Parser<'a> {
     }
 }
 
-pub fn file(p: &mut Parser) {
-    let m = p.open();
-    while !p.eof() {
-        if p.at(TokenKind::Template) {
-            template(p);
-        } else {
-            p.advance_with_error("expected a template")
-        }
+impl Parser<'_> {
+    pub fn parse(&mut self, scope: Scope) {
+        scope.parse(self);
     }
-    p.close(m, TokenKind::File);
-}
-/**
- * template name() {content}
- *
- */
-pub fn template(p: &mut Parser) {
-    assert!(p.at(TokenKind::Template));
-    let m = p.open();
-    p.expect(TokenKind::Template);
-    p.expect(TokenKind::Name);
-    p.expect(TokenKind::LParen);
-    p.expect(TokenKind::RParen);
-    block(p);
-    p.close(m, TokenKind::Template);
-}
-
-pub fn block(p: &mut Parser) {
-    eprintln!("{:?}", p.current());
-    assert!(p.at(TokenKind::LCurly));
-    let m = p.open();
-    p.eat(TokenKind::LCurly);
-    while !p.at(TokenKind::RCurly) && !p.eof() {
-        p.advance();
-    }
-
-    p.expect(TokenKind::RCurly);
-
-    p.close(m, TokenKind::Block);
 }
 
 #[cfg(test)]
 mod tests {
-    use logos::{Lexer};
+    use logos::Lexer;
 
     use crate::token_kind::TokenKind;
 
-    use super::{template, Parser, file};
+    use super::Parser;
+    use super::Scope;
 
     #[test]
     fn test_parser() {
-        let source = "
+        let source = r#"
+            include "another_template";
             template name() {
-                block,
-                abs 
-                def
+                signal input hello;
             }
             template another() {
-                hello
+                signal output hello;
+                var x;
             }
-        ";
+        "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
         let mut parser = Parser::new(&mut lexer);
 
-        file(&mut parser);
+        parser.parse(Scope::CircomProgram);
 
-        let tree = parser.build_tree();
-        
-        println!("{:?}", tree);
+        let cst = parser.build_tree();
+
+        println!("{:?}", cst);
     }
 }
