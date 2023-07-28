@@ -5,3 +5,29 @@ pub(super) fn expression(p: &mut Parser) {
     p.advance();
     p.close(open_marker, kind);
 }
+
+/**
+ * grammar: "(Symbol_1, Symbol_2,..., Symbol_n)"
+ */
+pub(super) fn tuple(p: &mut Parser) {
+    let m = p.open();
+    p.expect(LParen);
+    p.expect(Identifier);
+    while p.at(Comma) && !p.eof() {
+        p.expect(Comma);
+        p.expect(Identifier);
+    }
+    p.expect(RParen);
+    p.close(m, Tuple);
+}
+
+/**
+ * grammar:
+ *      "= | <== | <--" expression
+ */
+pub(super) fn tuple_init(p: &mut Parser) {
+    let m = p.open();
+    p.expect_any(&[Assign, RAssignSignal, RAssignConstraintSignal]);
+    expression(p);
+    p.close(m, TupleInit);
+}

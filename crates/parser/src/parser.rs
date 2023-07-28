@@ -132,8 +132,20 @@ impl<'a> Parser<'a> {
         token.kind == kind
     }
 
+    pub fn at_any(&mut self, kinds: &[TokenKind]) -> bool {
+        let current_kind = self.current().kind;
+        return kinds.contains(&current_kind);
+    }
+
     pub fn skip(&mut self) {
         self.next();
+    }
+
+    pub fn skip_if(&mut self, kinds: &[TokenKind]) {
+        if self.at_any(kinds) {
+            self.skip();
+        } 
+        eprintln!("expected skip {kinds:?}");
     }
 
     pub fn eat(&mut self, kind: TokenKind) -> bool {
@@ -152,7 +164,7 @@ impl<'a> Parser<'a> {
             self.eat(kind);
             return;
         }
-        eprintln!("expected {kinds:?}");
+        eprintln!("expected in any {kinds:?}");
     }
     pub fn expect(&mut self, kind: TokenKind) {
         if self.eat(kind) {
@@ -186,7 +198,7 @@ mod tests {
     fn test_parser() {
         let source = r#"
             include "another_template";
-            template name() {
+            template Identifier() {
                 signal input hello;
             }
             template another() {

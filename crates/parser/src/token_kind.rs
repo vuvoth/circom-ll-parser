@@ -8,17 +8,18 @@ pub enum TokenKind {
     #[error]
     Error = 0,
 
-    #[regex("[a-zA-Z_][a-zA-Z0-9_]*")]
-    Name,
-
-    #[regex(r#""[^"]*""#)]
-    String,
     #[token("pragma")]
     Pragma,
     #[token("circom")]
     Circom,
     #[regex("2.[0-9].[0-9]")]
     Version,
+    #[regex("[0-9]+")]
+    Number,
+    #[regex("[$_]*[a-zA-Z][a-zA-Z0-9_$]*")]
+    Identifier,
+    #[regex(r#""[^"]*""#)]
+    String,
     #[token("template")]
     Template,
     #[token("signal")]
@@ -43,7 +44,19 @@ pub enum TokenKind {
     Semicolon,
     #[token(",")]
     Comma,
+    #[token("=")]
+    Assign,
+    #[token("-->")]
+    LAssignSignal, 
+    #[token("==>")]
+    LAssignContraintSignal,
+    #[token("<--")]
+    RAssignSignal,
+    #[token("<==")]
+    RAssignConstraintSignal,
     CircomProgram,
     Block,
+    Tuple,
+    TupleInit,
     EOF,
 }

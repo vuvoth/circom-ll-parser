@@ -34,6 +34,15 @@ mod tests {
         let source = r#"
             {
                var x, y; 
+               var (x, y);
+               var (x, y) = "<expression>";
+               var a = x, b = y;
+               var a = x, b = y;
+               
+               signal a; 
+               signal a, b;
+               signal (a, b);
+               signal (a, b) = "<expression>";
             }
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
