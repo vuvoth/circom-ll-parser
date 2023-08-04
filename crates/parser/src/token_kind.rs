@@ -22,6 +22,12 @@ pub enum TokenKind {
     String,
     #[token("template")]
     Template,
+    #[token("component")]
+    Component,
+    #[token("main")]
+    Main,
+    #[token("public")]
+    Public,
     #[token("signal")]
     Signal,
     #[token("var")]
@@ -40,6 +46,10 @@ pub enum TokenKind {
     LCurly,
     #[token("}")]
     RCurly,
+    #[token("[")]
+    LBracket,
+    #[token("]")]
+    RBracket,
     #[token(";")]
     Semicolon,
     #[token(",")]

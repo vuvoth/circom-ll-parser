@@ -8,7 +8,8 @@ mod expression;
 mod include;
 mod pragma;
 mod template;
-
+mod main_component;
+mod list_identity;
 /**
  * parse circom program
  */
@@ -24,6 +25,7 @@ pub(crate) mod entry {
             match p.current().kind {
                 Template => template::template(p),
                 Include => include::include(p),
+                Component => main_component::main_component(p),
                 _ => p.advance_with_error("invalid token"),
             }
         }

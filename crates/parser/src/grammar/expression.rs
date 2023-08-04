@@ -31,3 +31,20 @@ pub(super) fn tuple_init(p: &mut Parser) {
     expression(p);
     p.close(m, TupleInit);
 }
+
+
+fn expression_atom(p: &mut Parser) {
+    let m = p.open();
+    match p.current().kind {
+        Number | Identifier => {
+            p.advance();
+            p.close(m, Number);
+        },
+
+        _ => {}
+    }
+}
+
+fn expression_top(p: &mut Parser) {
+    
+}
