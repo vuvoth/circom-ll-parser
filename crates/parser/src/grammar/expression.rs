@@ -70,9 +70,7 @@ pub fn expression_rec(p: &mut Parser, pb: u16) {
 
     while !p.eof() {
         let current_kind = p.current().kind;
-        println!("{:?} + {}\n", current_kind, pb);
         if let Some((lp, rp)) = current_kind.infix() {
-            println!("{} {}", rp, pb);
             if rp > pb {
                 let m = p.open_before(lhs);
                 p.advance();
