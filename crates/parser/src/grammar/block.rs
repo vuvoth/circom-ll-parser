@@ -35,14 +35,14 @@ mod tests {
             {
                var x, y; 
                var (x, y);
-               var (x, y) = "<expression>";
+               var (x, y) = a + b;
                var a = x, b = y;
                var a = x, b = y;
                
                signal a; 
                signal a, b;
                signal (a, b);
-               signal (a, b) = "<expression>";
+               signal (a, b) = a - b;
             }
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);

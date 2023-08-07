@@ -2,10 +2,7 @@ use crate::{node::Token, parser::Marker};
 
 use super::*;
 pub(super) fn expression(p: &mut Parser) {
-    let open_marker = p.open();
-    let kind = p.current().kind;
-    p.advance();
-    p.close(open_marker, kind);
+    expression_rec(p, 0);
 }
 
 /**
@@ -38,9 +35,14 @@ fn expression_atom(p: &mut Parser) -> Option<Marker> {
     let m = p.open();
     let m_close: Marker;
     match p.current().kind {
-        Number | Identifier => {
+        Number => {
             p.advance();
             m_close = p.close(m, Number);
+            return Some(m_close);
+        }
+        Identifier => {
+            p.advance();
+            m_close = p.close(m, Identifier);
             return Some(m_close);
         }
         LParen => {
@@ -54,17 +56,23 @@ fn expression_atom(p: &mut Parser) -> Option<Marker> {
     }
 }
 
-pub(super) fn expression_rec(p: &mut Parser, pb: u16) {
-    println!("{:?} {}", p.current(), pb);
+pub fn expression_rec(p: &mut Parser, pb: u16) {
     // magical
     let Some(mut lhs) = expression_atom(p) else {
         return;
     };
 
+    if p.at(LParen) {
+        let m = p.open_before(lhs);
+        tuple(p);
+        lhs = p.close(m, Call);
+    }
+
     while !p.eof() {
-        println!("  {:?}", p.current());
         let current_kind = p.current().kind;
+        println!("{:?} + {}\n", current_kind, pb);
         if let Some((lp, rp)) = current_kind.infix() {
+            println!("{} {}", rp, pb);
             if rp > pb {
                 let m = p.open_before(lhs);
                 p.advance();
@@ -73,8 +81,9 @@ pub(super) fn expression_rec(p: &mut Parser, pb: u16) {
             } else {
                 break;
             }
+        } else {
+            break;
         }
-        break;
     }
 }
 
@@ -86,11 +95,12 @@ mod tests {
     #[test]
     fn test_expression() {
         let source = r#"
-             4 + (12 + 3) + 10 * 9
+            hello(a) + hello(b) * 100 + 10 10
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
         let mut parser = Parser::new(&mut lexer);
 
+        println!("{}", source);
         expression_rec(&mut parser, 0);
 
         let cst = parser.build_tree();

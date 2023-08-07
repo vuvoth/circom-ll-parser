@@ -76,6 +76,7 @@ pub enum TokenKind {
     Block,
     Tuple,
     TupleInit,
+    Call,
     EOF,
 }
 
@@ -89,8 +90,8 @@ impl TokenKind {
 
     pub fn infix(self) -> Option<(u16, u16)> {
         match self {
-            Self::Add | Self::Sub => Some((0, 1)),
-            Self::Mul | Self::Div => Some((2, 3)),
+            Self::Add | Self::Sub => Some((1, 2)),
+            Self::Mul | Self::Div => Some((3, 4)),
             _ => None
         }
     }
