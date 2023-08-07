@@ -72,6 +72,10 @@ pub enum TokenKind {
     Div, 
     #[token("*")]
     Mul,
+    #[token("!")]
+    Not,
+    #[token("~")]
+    BitNot,
     CircomProgram,
     Block,
     Tuple,
@@ -90,8 +94,16 @@ impl TokenKind {
 
     pub fn infix(self) -> Option<(u16, u16)> {
         match self {
-            Self::Add | Self::Sub => Some((1, 2)),
-            Self::Mul | Self::Div => Some((3, 4)),
+            Self::Add | Self::Sub => Some((4, 5)),
+            Self::Mul | Self::Div => Some((6, 7)),
+            _ => None
+        }
+    }
+    pub fn prefix(self) -> Option<u16> {
+        match self {
+            Self::Sub => Some(100), 
+            Self::Not => Some(99),
+            Self::BitNot => Some(98),
             _ => None
         }
     }

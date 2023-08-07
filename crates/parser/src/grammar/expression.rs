@@ -57,11 +57,23 @@ fn expression_atom(p: &mut Parser) -> Option<Marker> {
 }
 
 pub fn expression_rec(p: &mut Parser, pb: u16) {
-    // magical
-    let Some(mut lhs) = expression_atom(p) else {
-        return;
+    let parse_able: Option<Marker> = if let Some(pp) = p.current().kind.prefix() {
+        let kind = p.current().kind;
+        let m = p.open();
+        p.advance();
+        expression_rec(p, pp);
+        Some(p.close(m, kind))
+    } else {
+        expression_atom(p)
     };
 
+    if parse_able.is_none() {
+        return;
+    }
+
+    let mut lhs = parse_able.unwrap();
+
+    // TODO: function call
     if p.at(LParen) {
         let m = p.open_before(lhs);
         tuple(p);
@@ -88,19 +100,19 @@ pub fn expression_rec(p: &mut Parser, pb: u16) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{grammar::entry::Scope, token_kind::TokenKind};
+    use crate::token_kind::TokenKind;
     use logos::Lexer;
     #[test]
     fn test_expression() {
         let source = r#"
-            hello(a) + hello(b) * 100 + 10 10
+            ~10 + ~10 * 2 - -10
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
         let mut parser = Parser::new(&mut lexer);
 
         println!("{}", source);
         expression_rec(&mut parser, 0);
-
+        // println!("{:?}", parser.events);
         let cst = parser.build_tree();
 
         println!("{:?}", cst);

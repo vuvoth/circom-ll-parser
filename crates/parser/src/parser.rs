@@ -14,7 +14,7 @@ pub struct Parser<'a> {
     pos: usize,
     current_token: Option<Token<'a>>,
     fuel: Cell<u32>,
-    events: Vec<Event<'a>>,
+    pub(crate) events: Vec<Event<'a>>,
 }
 
 #[derive(Clone, Copy, Debug)]
