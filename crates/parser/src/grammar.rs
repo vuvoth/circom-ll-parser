@@ -28,6 +28,7 @@ pub(crate) mod entry {
                 Component => main_component::main_component(p),
                 _ => p.advance_with_error("invalid token"),
             }
+            p.expect(Comma);
         }
         p.close(m, CircomProgram);
     }

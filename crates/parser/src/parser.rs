@@ -17,6 +17,7 @@ pub struct Parser<'a> {
     events: Vec<Event<'a>>,
 }
 
+#[derive(Clone, Copy, Debug)]
 pub enum Marker {
     Open(usize),
     Close(usize),

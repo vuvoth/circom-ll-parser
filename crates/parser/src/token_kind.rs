@@ -57,16 +57,41 @@ pub enum TokenKind {
     #[token("=")]
     Assign,
     #[token("-->")]
-    LAssignSignal, 
+    LAssignSignal,
     #[token("==>")]
     LAssignContraintSignal,
     #[token("<--")]
     RAssignSignal,
     #[token("<==")]
     RAssignConstraintSignal,
+    #[token("+")]
+    Add, 
+    #[token("-")]
+    Sub,
+    #[token("/")]
+    Div, 
+    #[token("*")]
+    Mul,
     CircomProgram,
     Block,
     Tuple,
     TupleInit,
     EOF,
+}
+
+impl TokenKind {
+    pub fn is_literal(self) -> bool {
+        match self {
+            Self::Number | Self::Identifier => true,
+            _ => false,
+        }
+    }
+
+    pub fn infix(self) -> Option<(u16, u16)> {
+        match self {
+            Self::Add | Self::Sub => Some((0, 1)),
+            Self::Mul | Self::Div => Some((2, 3)),
+            _ => None
+        }
+    }
 }
