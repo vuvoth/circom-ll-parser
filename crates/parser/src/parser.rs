@@ -71,7 +71,14 @@ impl<'a> Parser<'a> {
         let m = self.open();
         // TODO: Error reporting.
         eprintln!("{error}");
-        self.advance();
+        if !self.eof() {
+            self.advance();
+        } else {
+            self.events.push(Event::Token(Token {
+                kind: TokenKind::EOF,
+                text: "",
+            }))
+        }
         self.close(m, TokenKind::Error);
     }
 
@@ -145,7 +152,7 @@ impl<'a> Parser<'a> {
     pub fn skip_if(&mut self, kinds: &[TokenKind]) {
         if self.at_any(kinds) {
             self.skip();
-        } 
+        }
         eprintln!("expected skip {kinds:?}");
     }
 

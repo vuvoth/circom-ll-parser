@@ -32,31 +32,36 @@ pub(super) fn tuple_init(p: &mut Parser) {
 }
 
 fn expression_atom(p: &mut Parser) -> Option<Marker> {
-    let m = p.open();
     let m_close: Marker;
     match p.current().kind {
         Number => {
+            let m = p.open();
             p.advance();
             m_close = p.close(m, Number);
             return Some(m_close);
         }
         Identifier => {
+            let m = p.open();
             p.advance();
             m_close = p.close(m, Identifier);
             return Some(m_close);
         }
         LParen => {
+            let m = p.open();
             p.expect(LParen);
             expression_rec(p, 0);
             p.expect(RParen);
             m_close = p.close(m, Tuple);
             return Some(m_close);
         }
-        _ => return None,
+        _ => {
+            p.advance_with_error("Invalid Token");
+            return None;
+        }
     }
 }
 
-pub fn expression_rec(p: &mut Parser, pb: u16) {
+pub fn expression_rec(p: &mut Parser, pb: u16) -> Option<Marker> {
     let parse_able: Option<Marker> = if let Some(pp) = p.current().kind.prefix() {
         let kind = p.current().kind;
         let m = p.open();
@@ -68,7 +73,7 @@ pub fn expression_rec(p: &mut Parser, pb: u16) {
     };
 
     if parse_able.is_none() {
-        return;
+        return None;
     }
 
     let mut lhs = parse_able.unwrap();
@@ -84,7 +89,7 @@ pub fn expression_rec(p: &mut Parser, pb: u16) {
         let current_kind = p.current().kind;
         if let Some((lp, rp)) = current_kind.infix() {
             if !(rp > pb) {
-                return;
+                return None;
             }
 
             let m = p.open_before(lhs);
@@ -95,6 +100,14 @@ pub fn expression_rec(p: &mut Parser, pb: u16) {
             continue;
         }
 
+        break;
+    }
+    Some(lhs)
+}
+
+pub fn tenary_conditional_parse(p: &mut Parser) {
+    if let Some(mut lhs) = expression_rec(p, 0) {
+        let current_kind = p.current().kind;
         if matches!(current_kind, MarkQuestion) {
             let m = p.open_before(lhs);
             lhs = p.close(m, Condition);
@@ -107,14 +120,12 @@ pub fn expression_rec(p: &mut Parser, pb: u16) {
             let last_expression = p.open();
             expression_rec(p, 0);
             p.close(last_expression, Expression);
-            lhs = p.close(m, TenaryConditional);
-            continue;
-        }
 
-        break;
+            p.close(m, TenaryConditional);
+        }
+    } else {
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -123,14 +134,13 @@ mod tests {
     #[test]
     fn test_expression() {
         let source = r#"
-          a ? a + 10 * 100 : b(x) - 20
+          a + b - 
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
         let mut parser = Parser::new(&mut lexer);
 
         println!("{}", source);
-        expression_rec(&mut parser, 0);
-        // println!("{:?}", parser.events);
+        tenary_conditional_parse(&mut parser);
         let cst = parser.build_tree();
 
         println!("{:?}", cst);
