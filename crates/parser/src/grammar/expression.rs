@@ -83,17 +83,35 @@ pub fn expression_rec(p: &mut Parser, pb: u16) {
     while !p.eof() {
         let current_kind = p.current().kind;
         if let Some((lp, rp)) = current_kind.infix() {
-            if rp > pb {
-                let m = p.open_before(lhs);
-                p.advance();
-                expression_rec(p, lp);
-                lhs = p.close(m, current_kind);
-            } else {
-                break;
+            if !(rp > pb) {
+                return;
             }
-        } else {
-            break;
+
+            let m = p.open_before(lhs);
+            p.advance();
+            expression_rec(p, lp);
+            lhs = p.close(m, current_kind);
+
+            continue;
         }
+
+        if matches!(current_kind, MarkQuestion) {
+            let m = p.open_before(lhs);
+            lhs = p.close(m, Condition);
+            let m = p.open_before(lhs);
+            p.advance();
+            let first_expression = p.open();
+            expression_rec(p, 0);
+            p.close(first_expression, Expression);
+            p.expect(Colon);
+            let last_expression = p.open();
+            expression_rec(p, 0);
+            p.close(last_expression, Expression);
+            lhs = p.close(m, TenaryConditional);
+            continue;
+        }
+
+        break;
     }
 }
 
@@ -105,7 +123,7 @@ mod tests {
     #[test]
     fn test_expression() {
         let source = r#"
-            ~10 + ~10 * 2 - -10
+          a ? a + 10 * 100 : b(x) - 20
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
         let mut parser = Parser::new(&mut lexer);
