@@ -65,18 +65,61 @@ pub enum TokenKind {
     #[token("<==")]
     RAssignConstraintSignal,
     #[token("+")]
-    Add, 
+    Add,
     #[token("-")]
     Sub,
     #[token("/")]
-    Div, 
+    Div,
     #[token("*")]
     Mul,
+    #[token("!")]
+    Not,
+    #[token("~")]
+    BitNot,
+    #[token("**")]
+    Power,
+    #[token("\\")]
+    IntDiv,
+    #[token("%")]
+    Mod,
+    #[token("<<")]
+    ShiftL,
+    #[token(">>")]
+    ShiftR,
+    #[token("&")]
+    BitAnd,
+    #[token("|")]
+    BitOr,
+    #[token("^")]
+    BitXor,
+    #[token("==")]
+    Equal,
+    #[token("!=")]
+    NotEqual,
+    #[token("<")]
+    LessThan,
+    #[token(">")]
+    GreaterThan,
+    #[token("<=")]
+    LessThanAndEqual,
+    #[token(">=")]
+    GreaterThanAndEqual,
+    #[token("&&")]
+    BoolAnd,
+    #[token("||")]
+    BoolOr,
+    #[token("?")]
+    MarkQuestion, 
+    #[token(":")]
+    Colon,
     CircomProgram,
     Block,
     Tuple,
     TupleInit,
     Call,
+    TenaryConditional,
+    Condition,
+    Expression,
     EOF,
 }
 
@@ -90,9 +133,30 @@ impl TokenKind {
 
     pub fn infix(self) -> Option<(u16, u16)> {
         match self {
-            Self::Add | Self::Sub => Some((1, 2)),
-            Self::Mul | Self::Div => Some((3, 4)),
-            _ => None
+            Self::BoolOr => Some((78, 79)),
+            Self::BoolAnd => Some((80, 81)),
+            Self::Equal
+            | Self::NotEqual
+            | Self::LessThan
+            | Self::GreaterThan
+            | Self::LessThanAndEqual
+            | Self::GreaterThanAndEqual => Some((82, 83)),
+            Self::BitOr => Some((84, 85)),
+            Self::BitXor => Some((86, 87)),
+            Self::BitAnd => Some((88, 89)),
+            Self::ShiftL | Self::ShiftR => Some((90, 91)),
+            Self::Add | Self::Sub => Some((92, 93)),
+            Self::Mul | Self::Div | Self::IntDiv | Self::Mod => Some((94, 95)),
+            Self::Power => Some((96, 97)),
+            _ => None,
+        }
+    }
+    pub fn prefix(self) -> Option<u16> {
+        match self {
+            Self::Sub => Some(100),
+            Self::Not => Some(99),
+            Self::BitNot => Some(98),
+            _ => None,
         }
     }
 }
