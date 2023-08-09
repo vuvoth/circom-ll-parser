@@ -1,8 +1,8 @@
-use crate::{node::Token, parser::Marker};
+use crate::parser::Marker;
 
 use super::*;
 pub(super) fn expression(p: &mut Parser) {
-    expression_rec(p, 0);
+    circom_expression(p);
 }
 
 /**
@@ -61,6 +61,9 @@ fn expression_atom(p: &mut Parser) -> Option<Marker> {
     }
 }
 
+/**
+ * return marker which bound the expression
+ */
 pub fn expression_rec(p: &mut Parser, pb: u16) -> Option<Marker> {
     let parse_able: Option<Marker> = if let Some(pp) = p.current().kind.prefix() {
         let kind = p.current().kind;
@@ -105,7 +108,11 @@ pub fn expression_rec(p: &mut Parser, pb: u16) -> Option<Marker> {
     Some(lhs)
 }
 
-pub fn tenary_conditional_parse(p: &mut Parser) {
+/**
+ * circom_expression = expr ? expr: expr |
+ *                     expr                          
+ */
+fn circom_expression(p: &mut Parser) {
     if let Some(mut lhs) = expression_rec(p, 0) {
         let current_kind = p.current().kind;
         if matches!(current_kind, MarkQuestion) {
@@ -134,13 +141,13 @@ mod tests {
     #[test]
     fn test_expression() {
         let source = r#"
-          a + b - 
+          a > b ? b + 1  : 100
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
         let mut parser = Parser::new(&mut lexer);
 
         println!("{}", source);
-        tenary_conditional_parse(&mut parser);
+        circom_expression(&mut parser);
         let cst = parser.build_tree();
 
         println!("{:?}", cst);
