@@ -9,8 +9,8 @@ pub fn block(p: &mut Parser) {
         while !p.at(RCurly) && !p.eof() {
             let kind = p.current().kind;
             match kind {
-                Signal => declaration::signal(p),
-                Var => declaration::var(p),
+                Signal => declaration::signal_declaration(p),
+                Var => declaration::var_declaration(p),
                 _ => expression::expression(p),
             }
             p.expect(Semicolon);

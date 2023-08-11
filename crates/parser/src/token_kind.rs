@@ -112,7 +112,19 @@ pub enum TokenKind {
     MarkQuestion, 
     #[token(":")]
     Colon,
+    #[token("if")]
+    IfKw,
+    #[token("else")]
+    ElseKw,
+    #[token("for")]
+    ForKw,
+    #[token("while")]
+    WhileKw,
+    #[token("return")]
+    ReturnKw,
+    ForLoop,
     CircomProgram,
+    SignalHeader,
     Block,
     Tuple,
     TupleInit,
@@ -157,6 +169,13 @@ impl TokenKind {
             Self::Not => Some(99),
             Self::BitNot => Some(98),
             _ => None,
+        }
+    }
+
+    pub fn is_declaration_kw(self) -> bool {
+        match self {
+            Self::Var  | Self::Component | Self::Signal => true,
+            _ => false
         }
     }
 }
