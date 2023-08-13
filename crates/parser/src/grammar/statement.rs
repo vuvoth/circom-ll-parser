@@ -95,8 +95,9 @@ mod tests {
     #[test]
     fn if_statement_test() {
         let source = r#"
-          if (a) a <== 12;
-          else if (a == 12) c + 1= 12;
+          if (a) {
+            a = a + 12;
+          }
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
         let mut parser = Parser::new(&mut lexer);
