@@ -56,6 +56,8 @@ pub enum TokenKind {
     Comma,
     #[token("=")]
     Assign,
+    #[token("===")]
+    EqualSignal,
     #[token("-->")]
     LAssignSignal,
     #[token("==>")]
@@ -123,6 +125,7 @@ pub enum TokenKind {
     #[token("return")]
     ReturnKw,
     ForLoop,
+    AssignStatement,
     CircomProgram,
     SignalHeader,
     Block,

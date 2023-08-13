@@ -116,21 +116,27 @@ fn circom_expression(p: &mut Parser) {
     if let Some(mut lhs) = expression_rec(p, 0) {
         let current_kind = p.current().kind;
         if matches!(current_kind, MarkQuestion) {
+
             let m = p.open_before(lhs);
             lhs = p.close(m, Condition);
+
             let m = p.open_before(lhs);
             p.advance();
+
             let first_expression = p.open();
             expression_rec(p, 0);
             p.close(first_expression, Expression);
+
             p.expect(Colon);
+
             let last_expression = p.open();
             expression_rec(p, 0);
             p.close(last_expression, Expression);
 
             p.close(m, TenaryConditional);
+        } else {
+            
         }
-    } else {
     }
 }
 #[cfg(test)]

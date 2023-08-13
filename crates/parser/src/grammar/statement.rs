@@ -1,6 +1,13 @@
-use super::*;
+use super::{expression::expression, *, block::block};
 
 pub(super) fn parse(p: &mut Parser) {}
+
+pub(super) fn statement(p: &mut Parser) {
+    match p.current().kind {
+        IfKw => if_statement(p),
+        _ => statement_no_condition(p),
+    }
+}
 
 fn if_statement(p: &mut Parser) {
     let m = p.open();
@@ -8,19 +15,30 @@ fn if_statement(p: &mut Parser) {
     p.expect(LParen);
     expression::expression(p);
     p.expect(RParen);
-    p.expect(LCurly);
-    expression::expression(p);
-    p.expect(RCurly);
+    statement(p);
+    if p.at(ElseKw) {
+        p.expect(ElseKw);
+        statement(p);
+    }
     p.close(m, IfKw);
 }
 
 /**
  * no if condition here.
  */
-pub(super) fn statement_no_condition(p: &mut Parser) {
+fn statement_no_condition(p: &mut Parser) {
     match p.current().kind {
         ForKw => for_statement(p),
-        _ => unreachable!(),
+        WhileKw => while_statement(p),
+        ReturnKw => {
+            return_statement(p);
+            p.expect(Semicolon);
+        },
+        LCurly => block(p),
+        _ => {
+            assignment_statement(p);
+            p.expect(Semicolon);
+        },
     }
 }
 
@@ -31,26 +49,42 @@ fn for_statement(p: &mut Parser) {
     if p.current().kind.is_declaration_kw() {
         declaration::declaration(p);
     } else {
-        assign_statement(p);
+        assignment_statement(p);
     }
     p.expect(Semicolon);
     expression::expression(p);
     p.expect(Semicolon);
 
-    assign_statement(p);
+    assignment_statement(p);
     p.expect(RParen);
 
     statement_no_condition(p);
     p.close(m, ForLoop);
 }
 
-fn while_statement() {
-    
+fn while_statement(p: &mut Parser) {
+    p.expect(WhileKw);
+    p.expect(LParen);
+    expression(p);
+    p.expect(RParen);
+    statement(p);
 }
 
-fn return_statement() {}
+fn return_statement(p: &mut Parser) {
+    let m = p.open();
+    p.expect(ReturnKw);
+    expression(p);
+    p.close(m, ReturnKw);
+}
 
-fn assign_statement(p: &mut Parser) {}
+
+fn assignment_statement(p: &mut Parser) {
+    let m = p.open();
+    expression(p);
+    p.expect_any(&[Assign, RAssignSignal, RAssignConstraintSignal, LAssignContraintSignal, LAssignSignal, EqualSignal]);
+    expression(p);
+    p.close(m, AssignStatement);
+}
 
 #[cfg(test)]
 mod tests {
@@ -61,9 +95,8 @@ mod tests {
     #[test]
     fn if_statement_test() {
         let source = r#"
-          if (a) {
-            a + b
-          }
+          if (a) a <== 12;
+          else if (a == 12) c + 1= 12;
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
         let mut parser = Parser::new(&mut lexer);
