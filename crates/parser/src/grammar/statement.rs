@@ -1,12 +1,14 @@
-use super::{expression::expression, *, block::block};
+use super::{block::block, expression::expression, *};
 
 pub(super) fn parse(p: &mut Parser) {}
 
 pub(super) fn statement(p: &mut Parser) {
+    let m = p.open();
     match p.current().kind {
         IfKw => if_statement(p),
         _ => statement_no_condition(p),
     }
+    p.close(m, Statement);
 }
 
 fn if_statement(p: &mut Parser) {
@@ -33,12 +35,20 @@ fn statement_no_condition(p: &mut Parser) {
         ReturnKw => {
             return_statement(p);
             p.expect(Semicolon);
-        },
+        }
         LCurly => block(p),
+        LogKw => {
+            log_statement(p);
+            p.expect(Semicolon);
+        }
+        AssertKw => {
+            assert_statement(p);
+            p.expect(Semicolon);
+        }
         _ => {
             assignment_statement(p);
             p.expect(Semicolon);
-        },
+        }
     }
 }
 
@@ -70,6 +80,37 @@ fn while_statement(p: &mut Parser) {
     statement(p);
 }
 
+fn assert_statement(p: &mut Parser) {
+    let m = p.open();
+    p.expect(AssertKw);
+    p.expect(LParen);
+    expression(p);
+    p.expect(RParen);
+    p.close(m, AssertKw);
+}
+
+fn log_statement(p: &mut Parser) {
+    let m = p.open();
+    p.expect(LogKw);
+    p.expect(LParen);
+    while !p.eof() {
+        if p.at(RParen) {
+            break;
+        }
+        match p.current().kind {
+            CircomString => p.advance(),
+            _ => expression(p),
+        }
+        if !p.at(Comma) {
+            break;
+        } else {
+            p.advance();
+        }
+    }
+    p.expect(RParen);
+    p.close(m, LogKw);
+}
+
 fn return_statement(p: &mut Parser) {
     let m = p.open();
     p.expect(ReturnKw);
@@ -77,11 +118,17 @@ fn return_statement(p: &mut Parser) {
     p.close(m, ReturnKw);
 }
 
-
 fn assignment_statement(p: &mut Parser) {
     let m = p.open();
     expression(p);
-    p.expect_any(&[Assign, RAssignSignal, RAssignConstraintSignal, LAssignContraintSignal, LAssignSignal, EqualSignal]);
+    p.expect_any(&[
+        Assign,
+        RAssignSignal,
+        RAssignConstraintSignal,
+        LAssignContraintSignal,
+        LAssignSignal,
+        EqualSignal,
+    ]);
     expression(p);
     p.close(m, AssignStatement);
 }
@@ -95,15 +142,14 @@ mod tests {
     #[test]
     fn if_statement_test() {
         let source = r#"
-          if (a) {
-            a = a + 12;
-          }
+            assert(1 == 2);
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
         let mut parser = Parser::new(&mut lexer);
 
         println!("{}", source);
-        if_statement(&mut parser);
+
+        statement(&mut parser);
         let cst = parser.build_tree();
 
         println!("{:?}", cst);

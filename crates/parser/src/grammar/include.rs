@@ -5,7 +5,7 @@ pub(super) fn include(p: &mut Parser) {
 
     let m = p.open();
     p.expect(Include);
-    p.expect(String);
+    p.expect(CircomString);
     p.expect(Semicolon);
     p.close(m, Include);
 }

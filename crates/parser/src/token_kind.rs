@@ -19,7 +19,7 @@ pub enum TokenKind {
     #[regex("[$_]*[a-zA-Z][a-zA-Z0-9_$]*")]
     Identifier,
     #[regex(r#""[^"]*""#)]
-    String,
+    CircomString,
     #[token("template")]
     Template,
     #[token("component")]
@@ -38,6 +38,8 @@ pub enum TokenKind {
     Input,
     #[token("output")]
     Output,
+    #[token("log")]
+    LogKw,
     #[token("(")]
     LParen,
     #[token(")")]
@@ -124,6 +126,8 @@ pub enum TokenKind {
     WhileKw,
     #[token("return")]
     ReturnKw,
+    #[token("assert")]
+    AssertKw,
     ForLoop,
     AssignStatement,
     CircomProgram,
@@ -135,6 +139,7 @@ pub enum TokenKind {
     TenaryConditional,
     Condition,
     Expression,
+    Statement,
     EOF,
 }
 
