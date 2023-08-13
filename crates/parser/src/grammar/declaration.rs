@@ -2,7 +2,23 @@ use super::{
     expression::{tuple, tuple_init},
     *,
 };
-pub(super) fn var(p: &mut Parser) {
+
+
+fn signal_header(p: &mut Parser) {
+    let m = p.open();
+    p.expect(Signal);
+    if p.at_any(&[Input, Output]) {
+        p.advance();
+    }
+    p.close(m, SignalHeader);
+}
+
+/**
+ * Declaration := "var" (SimpleSymbol, ..., SimpleSymbol) TupleInitialization |
+ *               
+ *             
+ */
+pub(super) fn var_declaration(p: &mut Parser) {
     let m = p.open();
     p.expect(Var);
 
@@ -30,18 +46,14 @@ pub(super) fn var(p: &mut Parser) {
     p.close(m, Var);
 }
 
-pub(super) fn signal(p: &mut Parser) {
+pub(super) fn signal_declaration(p: &mut Parser) {
     if !p.at(Signal) {
         p.advance_with_error("Signal error");
         return;
     }
 
     let m = p.open();
-    p.expect(Signal);
-    if p.at_any(&[Input, Output]) {
-        p.expect_any(&[Input, Output]);
-    }
-
+    signal_header(p);
    
     if p.at(LParen) {
         tuple(p);
@@ -57,4 +69,13 @@ pub(super) fn signal(p: &mut Parser) {
         }
     } 
     p.close(m, Signal);
+}
+
+
+pub(super) fn declaration(p: &mut Parser) {
+    match p.current().kind {
+        Signal => signal_declaration(p),
+        Var => var_declaration(p),
+        _ => unreachable!()
+    }
 }

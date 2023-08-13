@@ -1,4 +1,4 @@
-use super::*;
+use super::{expression::expression, *};
 
 pub fn block(p: &mut Parser) {
     if !p.at(LCurly) {
@@ -9,11 +9,16 @@ pub fn block(p: &mut Parser) {
         while !p.at(RCurly) && !p.eof() {
             let kind = p.current().kind;
             match kind {
-                Signal => declaration::signal(p),
-                Var => declaration::var(p),
-                _ => expression::expression(p),
+                Signal => {
+                    declaration::signal_declaration(p);
+                    p.expect(Semicolon);
+                }
+                Var => {
+                    declaration::var_declaration(p);
+                    p.expect(Semicolon);
+                }
+                _ => statement::statement(p),
             }
-            p.expect(Semicolon);
         }
 
         p.expect(RCurly);
@@ -26,7 +31,7 @@ pub fn block(p: &mut Parser) {
 mod tests {
     use logos::Lexer;
 
-    use crate::{token_kind::TokenKind, grammar::entry::Scope};
+    use crate::{grammar::entry::Scope, token_kind::TokenKind};
 
     use super::*;
     #[test]
@@ -43,6 +48,7 @@ mod tests {
                signal a, b;
                signal (a, b);
                signal (a, b) = a - b;
+               a <== 12 + 1;
             }
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
@@ -52,6 +58,6 @@ mod tests {
 
         let cst = parser.build_tree();
 
-        println!("{:?}", cst);   
+        println!("{:?}", cst);
     }
 }

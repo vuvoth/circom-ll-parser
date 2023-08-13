@@ -19,7 +19,7 @@ pub enum TokenKind {
     #[regex("[$_]*[a-zA-Z][a-zA-Z0-9_$]*")]
     Identifier,
     #[regex(r#""[^"]*""#)]
-    String,
+    CircomString,
     #[token("template")]
     Template,
     #[token("component")]
@@ -38,6 +38,8 @@ pub enum TokenKind {
     Input,
     #[token("output")]
     Output,
+    #[token("log")]
+    LogKw,
     #[token("(")]
     LParen,
     #[token(")")]
@@ -56,6 +58,8 @@ pub enum TokenKind {
     Comma,
     #[token("=")]
     Assign,
+    #[token("===")]
+    EqualSignal,
     #[token("-->")]
     LAssignSignal,
     #[token("==>")]
@@ -112,7 +116,22 @@ pub enum TokenKind {
     MarkQuestion, 
     #[token(":")]
     Colon,
+    #[token("if")]
+    IfKw,
+    #[token("else")]
+    ElseKw,
+    #[token("for")]
+    ForKw,
+    #[token("while")]
+    WhileKw,
+    #[token("return")]
+    ReturnKw,
+    #[token("assert")]
+    AssertKw,
+    ForLoop,
+    AssignStatement,
     CircomProgram,
+    SignalHeader,
     Block,
     Tuple,
     TupleInit,
@@ -120,6 +139,7 @@ pub enum TokenKind {
     TenaryConditional,
     Condition,
     Expression,
+    Statement,
     EOF,
 }
 
@@ -157,6 +177,13 @@ impl TokenKind {
             Self::Not => Some(99),
             Self::BitNot => Some(98),
             _ => None,
+        }
+    }
+
+    pub fn is_declaration_kw(self) -> bool {
+        match self {
+            Self::Var  | Self::Component | Self::Signal => true,
+            _ => false
         }
     }
 }

@@ -10,6 +10,7 @@ mod pragma;
 mod template;
 mod main_component;
 mod list_identity;
+mod statement;
 /**
  * parse circom program
  */
