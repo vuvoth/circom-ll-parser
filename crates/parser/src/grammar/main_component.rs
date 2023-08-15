@@ -2,10 +2,10 @@ use super::*;
 
 
 pub fn main_component(p: &mut Parser) {
-    p.expect(Component);
-    p.expect(Main);
+    p.expect(ComponentKw);
+    p.expect(MainKw);
     p.expect(LCurly);
-    p.expect(Public);
+    p.expect(PublicKw);
     p.expect(LBracket);
     list_identity::parse(p);
     p.expect(RBracket);

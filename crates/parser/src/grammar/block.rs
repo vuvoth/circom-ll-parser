@@ -9,11 +9,11 @@ pub fn block(p: &mut Parser) {
         while !p.at(RCurly) && !p.eof() {
             let kind = p.current().kind;
             match kind {
-                Signal => {
+                SignalKw => {
                     declaration::signal_declaration(p);
                     p.expect(Semicolon);
                 }
-                Var => {
+                VarKw => {
                     declaration::var_declaration(p);
                     p.expect(Semicolon);
                 }
@@ -49,6 +49,7 @@ mod tests {
                signal (a, b);
                signal (a, b) = a - b;
                a <== 12 + 1;
+               a ==>b;
             }
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);

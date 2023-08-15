@@ -6,8 +6,8 @@ use super::{
 
 fn signal_header(p: &mut Parser) {
     let m = p.open();
-    p.expect(Signal);
-    if p.at_any(&[Input, Output]) {
+    p.expect(SignalKw);
+    if p.at_any(&[InputKw, OutputKw]) {
         p.advance();
     }
     p.close(m, SignalHeader);
@@ -20,7 +20,7 @@ fn signal_header(p: &mut Parser) {
  */
 pub(super) fn var_declaration(p: &mut Parser) {
     let m = p.open();
-    p.expect(Var);
+    p.expect(VarKw);
 
     if p.at(LParen) {
         tuple(p);
@@ -43,11 +43,11 @@ pub(super) fn var_declaration(p: &mut Parser) {
             }
         }
     }
-    p.close(m, Var);
+    p.close(m, VarKw);
 }
 
 pub(super) fn signal_declaration(p: &mut Parser) {
-    if !p.at(Signal) {
+    if !p.at(SignalKw) {
         p.advance_with_error("Signal error");
         return;
     }
@@ -68,14 +68,14 @@ pub(super) fn signal_declaration(p: &mut Parser) {
             p.expect(Identifier);
         }
     } 
-    p.close(m, Signal);
+    p.close(m, SignalKw);
 }
 
 
 pub(super) fn declaration(p: &mut Parser) {
     match p.current().kind {
-        Signal => signal_declaration(p),
-        Var => var_declaration(p),
+        SignalKw => signal_declaration(p),
+        VarKw => var_declaration(p),
         _ => unreachable!()
     }
 }

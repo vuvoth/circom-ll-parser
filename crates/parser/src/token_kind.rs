@@ -21,23 +21,25 @@ pub enum TokenKind {
     #[regex(r#""[^"]*""#)]
     CircomString,
     #[token("template")]
-    Template,
+    TemplateKw,
+    #[token("function")]
+    FunctionKw,
     #[token("component")]
-    Component,
+    ComponentKw,
     #[token("main")]
-    Main,
+    MainKw,
     #[token("public")]
-    Public,
+    PublicKw,
     #[token("signal")]
-    Signal,
+    SignalKw,
     #[token("var")]
-    Var,
+    VarKw,
     #[token("include")]
-    Include,
+    IncludeKw,
     #[token("input")]
-    Input,
+    InputKw,
     #[token("output")]
-    Output,
+    OutputKw,
     #[token("log")]
     LogKw,
     #[token("(")]
@@ -139,6 +141,7 @@ pub enum TokenKind {
     TenaryConditional,
     Condition,
     Expression,
+    FunctionDef,
     Statement,
     EOF,
 }
@@ -182,7 +185,7 @@ impl TokenKind {
 
     pub fn is_declaration_kw(self) -> bool {
         match self {
-            Self::Var  | Self::Component | Self::Signal => true,
+            Self::VarKw  | Self::ComponentKw | Self::SignalKw => true,
             _ => false
         }
     }

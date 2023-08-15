@@ -1,11 +1,11 @@
 use super::*;
 
 pub(super) fn include(p: &mut Parser) {
-    assert!(p.at(Include));
+    assert!(p.at(IncludeKw));
 
     let m = p.open();
-    p.expect(Include);
+    p.expect(IncludeKw);
     p.expect(CircomString);
     p.expect(Semicolon);
-    p.close(m, Include);
+    p.close(m, IncludeKw);
 }
