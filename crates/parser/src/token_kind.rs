@@ -118,6 +118,8 @@ pub enum TokenKind {
     MarkQuestion, 
     #[token(":")]
     Colon,
+    #[token(".")]
+    Dot,
     #[token("if")]
     IfKw,
     #[token("else")]
@@ -183,6 +185,13 @@ impl TokenKind {
         }
     }
 
+    pub fn postfix(self) -> Option<u16> {
+        match self {
+            Self::Dot => Some(200),
+            Self::LBracket => Some(200),
+            _ => None
+        }
+    }
     pub fn is_declaration_kw(self) -> bool {
         match self {
             Self::VarKw  | Self::ComponentKw | Self::SignalKw => true,

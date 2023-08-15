@@ -212,6 +212,8 @@ mod tests {
             template another() {
                 signal output hello;
                 var x;
+                x <== x.hello + 1;
+                x <== y.f + a[12];
             }
             function a() {
                 a <== b;

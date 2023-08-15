@@ -42,7 +42,7 @@ fn expression_atom(p: &mut Parser) -> Option<Marker> {
         }
         Identifier => {
             let m = p.open();
-            p.advance();
+            p.advance(); 
             m_close = p.close(m, Identifier);
             return Some(m_close);
         }
@@ -102,7 +102,21 @@ pub fn expression_rec(p: &mut Parser, pb: u16) -> Option<Marker> {
 
             continue;
         }
-
+        if let Some(pp) = current_kind.postfix() {
+            if !(pp > pb) {
+                return None;
+            }
+            let m = p.open_before(lhs); 
+            p.advance();
+            if matches!(current_kind, LBracket) {
+                expression_rec(p, 0);
+                p.expect(RBracket);
+            } else {
+                expression_rec(p, pp);
+            }
+            lhs = p.close(m, current_kind);
+            continue;
+        }
         break;
     }
     Some(lhs)
