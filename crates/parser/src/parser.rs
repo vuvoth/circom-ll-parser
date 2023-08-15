@@ -219,6 +219,10 @@ mod tests {
                 a <== b;
                 log("hellow");
             }
+            function a() {
+                a <== b;
+                log("hellow");
+            }
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
         let mut parser = Parser::new(&mut lexer);
