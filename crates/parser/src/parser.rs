@@ -213,6 +213,10 @@ mod tests {
                 signal output hello;
                 var x;
             }
+            function a() {
+                a <== b;
+                log("hellow");
+            }
         "#;
         let mut lexer = Lexer::<TokenKind>::new(source);
         let mut parser = Parser::new(&mut lexer);

@@ -24,9 +24,10 @@ pub(crate) mod entry {
         let m = p.open();
         while !p.eof() {
             match p.current().kind {
-                Template => template::template(p),
-                Include => include::include(p),
-                Component => main_component::main_component(p),
+                TemplateKw => template::template(p),
+                IncludeKw => include::include(p),
+                ComponentKw => main_component::main_component(p),
+                FunctionKw => template::function_parse(p),
                 _ => p.advance_with_error("invalid token"),
             }
             p.expect(Comma);
